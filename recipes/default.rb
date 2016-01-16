@@ -6,6 +6,11 @@
 #
 # All rights reserved - Do Not Redistribute
 #
+execute "update" do
+command "apt-get update -y"
+action :run
+end
+
 package "mysql-server" do
 action :install
 end
@@ -64,9 +69,12 @@ code <<-EOH
 
 	/usr/bin/mysql -e "CREATE USER \'#{user[:username]}\'@'%' IDENTIFIED BY \'#{user[:password]}\';" -D mysql -u root -p#{node[:bsql][:root_pass]}
 	
-	/usr/bin/mysql -e "GRANT ALL ON *.* TO \'#{user[:username]}\'@'localhost';" -u root -p#{node[:bsql][:root_pass]}
+	/usr/bin/mysql -e "GRANT ALL PRIVILEGES ON *.* TO \'#{user[:username]}\'@'localhost';" -u root -p#{node[:bsql][:root_pass]}
 
-	/usr/bin/mysql -e "GRANT ALL ON *.* TO \'#{user[:username]}\'@'%';" -u root -p#{node[:bsql][:root_pass]}
+	/usr/bin/mysql -e "GRANT ALL PRIVILEGES ON *.* TO \'#{user[:username]}\'@'%';" -u root -p#{node[:bsql][:root_pass]}
+
+	/usr/bin/mysql -e "GRANT ALL PRIVILEGES ON wordpress.* TO \'#{user[:username]}\'@'localhost IDENTIFIED BY \'#{user[:password]}\';" -u root -p#{node[:bsql][:root_pass]}
+
 
 	/usr/bin/mysqladmin flush-privileges -p#{node[:bsql][:root_pass]}
 EOH
@@ -76,6 +84,9 @@ not_if <<-EOH
 EOH
 end
 end
+
+include_recipe "bsql::wordpress"
+include_recipe "bsql::nginx"
 
 
 
